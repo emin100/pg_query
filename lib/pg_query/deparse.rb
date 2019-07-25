@@ -1076,6 +1076,11 @@ class PgQuery
         output << node[TARGET_LIST_FIELD].map do |item|
           deparse_item(item, :select)
         end.join(', ')
+
+        if node['intoClause']
+          output << 'INTO'
+          output << deparse_item(node['intoClause'])
+        end
       end
 
       if node[FROM_CLAUSE_FIELD]
