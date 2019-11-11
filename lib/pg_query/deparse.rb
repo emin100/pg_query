@@ -413,12 +413,14 @@ class PgQuery
       name = (node['funcname'].map { |n| deparse_item(n, FUNC_CALL) } - ['pg_catalog']).join('.')
       distinct = node['agg_distinct'] ? 'DISTINCT ' : ''
       output << format('%s(%s%s)', name, distinct, args.join(', '))
-      output << format('OVER (%s)', deparse_item(node['over'])) if node['over']
+      output << format('OVER %s', deparse_item(node['over'])) if node['over']
 
       output.join(' ')
     end
 
     def deparse_windowdef(node)
+      return deparse_identifier(node['name']) if node['name']
+
       output = []
 
       if node['partitionClause']
@@ -435,7 +437,7 @@ class PgQuery
         end.join(', ')
       end
 
-      output.join(' ')
+      format('(%s)', output.join(' '))
     end
 
     def deparse_functionparameter(node)
@@ -1273,7 +1275,7 @@ class PgQuery
       # Just pass along any custom types.
       # (The pg_catalog types are built-in Postgres system types and are
       #  handled in the case statement below)
-      return names.join('.') if catalog != 'pg_catalog'
+      return names.join('.') + (arguments.nil? ? '' : "(#{arguments})") if catalog != 'pg_catalog'
 
       case type
       when 'bpchar'
@@ -1295,7 +1297,7 @@ class PgQuery
       when 'real', 'float4'
         'real'
       when 'float8'
-        'double'
+        'double precision'
       when 'time'
         'time'
       when 'timetz'
