@@ -1200,7 +1200,7 @@ class PgQuery
       if node['returningList']
         output << 'RETURNING'
         output << node['returningList'].map do |column|
-          deparse_item(column['ResTarget']['val'])
+          deparse_item(column, :select)
         end.join(', ')
       end
 
