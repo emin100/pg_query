@@ -1202,7 +1202,7 @@ class PgQuery
 
       if node['cols']
         output << '(' + node['cols'].map do |column|
-          deparse_item(column)
+          deparse_item(column, :select)
         end.join(', ') + ')'
       end
 
