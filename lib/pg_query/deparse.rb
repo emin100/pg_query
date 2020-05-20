@@ -399,7 +399,7 @@ class PgQuery
       if context == :select
         [deparse_item(node['val']), deparse_identifier(node['name'])].compact.join(' AS ')
       elsif context == :update
-        [node['name'], deparse_item(node['val'])].compact.join(' = ')
+        [deparse_identifier(node['name']), deparse_item(node['val'])].compact.join(' = ')
       elsif context == :excluded
         [deparse_identifier(node['name'], escape_always: true), deparse_item(node['val'], context)].compact.join(' = ')
       elsif node['val'].nil?
