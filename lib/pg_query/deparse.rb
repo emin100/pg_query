@@ -423,6 +423,7 @@ class PgQuery
       else
         distinct = node['agg_distinct'] ? 'DISTINCT ' : ''
         output << format('%s(%s%s)', name, distinct, args.join(', '))
+        output << format('FILTER (WHERE %s)', deparse_item(node['agg_filter'])) if node['agg_filter']
         output << format('OVER %s', deparse_item(node['over'])) if node['over']
       end
 
