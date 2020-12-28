@@ -170,7 +170,7 @@ describe PgQuery::Deparse do
       end
 
       context 'OVERLAY' do
-        let(:query) { 'SELECT overlay("m"."name" placing \'******\' from 3 for 6) AS tc_kimlik FROM "tb_test" m' }
+        let(:query) { 'SELECT OVERLAY("m"."name" PLACING \'******\' FROM 3 FOR 6) AS tc_kimlik FROM "tb_test" m' }
 
         it { is_expected.to eq query }
       end
@@ -595,8 +595,27 @@ describe PgQuery::Deparse do
         it { is_expected.to eq query }
       end
 
-      context 'boolean' do
+      context 'boolean column reference' do
         let(:query) { "SELECT \"table_field\"::bool, \"table_field\"::boolean FROM \"t\"" }
+
+        it { is_expected.to eq query }
+      end
+
+      context 'boolean bool value cast' do
+        let(:query) { "SELECT true, false" }
+
+        it { is_expected.to eq query }
+      end
+
+      context 'boolean string value cast' do
+        let(:query) { "SELECT 't'::boolean, 'f'::boolean" }
+
+        # The AST is identical to the more common "SELECT true" case, which is why we return the short-form in that case
+        it { is_expected.to eq "SELECT true, false" }
+      end
+
+      context 'boolean integer value cast' do
+        let(:query) { "SELECT 1::boolean, 0::boolean" }
 
         it { is_expected.to eq query }
       end
@@ -657,25 +676,25 @@ describe PgQuery::Deparse do
         it { is_expected.to eq oneline_query }
       end
 
-      context 'onconflict' do
+      context 'ON CONFLICT' do
         let(:query) { 'INSERT INTO "x" (y, z) VALUES (1, \'abc\') ON CONFLICT ("y") DO UPDATE SET "user" = EXCLUDED."user" RETURNING "y"' }
 
         it { is_expected.to eq query }
       end
 
-      context 'onconflict do noting' do
+      context 'ON CONFLICT DO NOTHING' do
         let(:query) { 'INSERT INTO "x" (y, z) VALUES (1, \'abc\') ON CONFLICT ("y") DO NOTHING RETURNING "y"' }
 
         it { is_expected.to eq query }
       end
 
-      context 'onconflict do noting with where clause' do
+      context 'ON CONFLICT DO NOTHING with WHERE clause' do
         let(:query) { 'INSERT INTO "distributors" (did, dname) VALUES (10, \'Conrad International\') ON CONFLICT ("did") WHERE "is_active" DO NOTHING' }
 
         it { is_expected.to eq query }
       end
 
-      context 'onconflict do noting on CONSTRAINT' do
+      context 'ON CONFLICT DO NOTHING on CONSTRAINT' do
         let(:query) { 'INSERT INTO "distributors" (did, dname) VALUES (9, \'Antwerp Design\') ON CONFLICT ON CONSTRAINT "distributors_pkey" DO NOTHING' }
 
         it { is_expected.to eq query }

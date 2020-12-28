@@ -417,9 +417,11 @@ class PgQuery
       # COUNT(*)
       args << '*' if node['agg_star']
 
-      name = (node['funcname'].map { |n| deparse_item(n, FUNC_CALL) } - ['pg_catalog']).join('.')
-      if name == 'overlay'
-        output << format('%s(%s placing %s from %s for %s)', name, args[0], args[1], args[2], args[3])
+      name = (node['funcname'].map { |n| deparse_item(n, FUNC_CALL) }).join('.')
+      if name == 'pg_catalog.overlay'
+        # Note that this is a bit odd, but "OVERLAY" is a keyword on its own merit, and only accepts the
+        # keyword parameter style when its called as a keyword, not as a regular function (i.e. pg_catalog.overlay)
+        output << format('OVERLAY(%s PLACING %s FROM %s FOR %s)', args[0], args[1], args[2], args[3])
       else
         distinct = node['agg_distinct'] ? 'DISTINCT ' : ''
         output << format('%s(%s%s)', name, distinct, args.join(', '))
@@ -1223,7 +1225,7 @@ class PgQuery
       output << deparse_item(node['selectStmt'])
 
       if node['onConflictClause']
-        output << deparse_insert_onconflict(node['onConflictClause']['OnConflictClause'])
+        output << deparse_insert_onconflict(node['onConflictClause'][ON_CONFLICT_CLAUSE])
       end
 
       if node['returningList']
@@ -1308,10 +1310,30 @@ class PgQuery
       output.join(' ')
     end
 
-    def deparse_typecast(node) # rubocop:disable Metrics/CyclomaticComplexity
-      if deparse_item(node['typeName']) == 'boolean' || deparse_item(node['typeName']) == 'bool'
-        return 'true' if deparse_item(node['arg']) == "'t'" || deparse_item(node['arg']) == 'true'
-        return 'false' if deparse_item(node['arg']) == "'f'" || deparse_item(node['arg']) == 'false'
+    # Builds a properly-qualified reference to a built-in Postgres type.
+    #
+    # Inspired by SystemTypeName in Postgres' gram.y, but without node name
+    # and locations, to simplify comparison.
+    def make_system_type_name(name)
+      {
+        'names' => [
+          { 'String' => { 'str' => 'pg_catalog' } },
+          { 'String' => { 'str' => name } }
+        ],
+        'typemod' => -1
+      }
+    end
+
+    def make_string(str)
+      { 'String' => { 'str' => str } }
+    end
+
+    def deparse_typecast(node)
+      # Handle "bool" or "false" in the statement, which is represented as a typecast
+      # (other boolean casts should be represented as a cast, i.e. don't need special handling)
+      if node['arg'][A_CONST] && node['typeName'][TYPE_NAME].slice('names', 'typemod') == make_system_type_name('bool')
+        return 'true' if node['arg'][A_CONST]['val'] == make_string('t')
+        return 'false' if node['arg'][A_CONST]['val'] == make_string('f')
       end
 
       context = true if node['arg']['A_Expr']
