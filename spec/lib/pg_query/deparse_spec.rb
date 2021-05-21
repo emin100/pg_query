@@ -398,6 +398,12 @@ describe PgQuery::Deparse do
         it { is_expected.to eq query }
       end
 
+      context 'indirection with cast' do
+        let(:query) { 'SELECT ("ps"::public.yy)."id", unnest("xx"."list") AS ps FROM "xx"' }
+
+        it { is_expected.to eq query }
+      end
+
       context 'NOT' do
         let(:query) { 'SELECT * FROM "x" WHERE NOT "y"' }
 
