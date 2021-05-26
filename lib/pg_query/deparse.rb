@@ -809,7 +809,12 @@ class PgQuery
     end
 
     def deparse_columndef(node)
-      output = [node['colname']]
+      colname = if node['colname'] =~ /[A-Z]/
+                  deparse_identifier(node['colname'], escape_always: true)
+                else
+                  node['colname']
+                end
+      output = [colname]
       output << deparse_item(node['typeName'])
       if node['raw_default']
         output << 'USING'

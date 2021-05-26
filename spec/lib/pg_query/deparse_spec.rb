@@ -586,6 +586,18 @@ describe PgQuery::Deparse do
 
         it { is_expected.to eq oneline_query }
       end
+
+      context 'with columndef with function' do
+        let(:query) do
+          %q{
+            SELECT * FROM "tb_xx" x
+            CROSS JOIN LATERAL jsonb_to_recordset("x"."json_data" #> '{payload,1}') d ("Name" text)
+            WHERE "d"."Name" = 'Abc'
+          }
+        end
+
+        it { is_expected.to eq oneline_query }
+      end
     end
 
     context 'type cast' do
