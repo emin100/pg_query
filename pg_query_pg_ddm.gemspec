@@ -2,7 +2,7 @@ $LOAD_PATH.push File.expand_path('../lib', __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = 'pg_query_pg_ddm'
-  s.version     = 0.5
+  s.version     = 0.6
 
   s.summary     = 'PostgreSQL query parsing and normalization library'
   s.description = 'Parses SQL queries using a copy of the PostgreSQL server query parser(This is a fork of https://github.com/lfittl/pg_query. ) This repo includes extra deparser improvements.'
